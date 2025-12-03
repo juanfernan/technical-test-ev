@@ -10,3 +10,5 @@
 /TestEv/TestEv.Infrastructure/obj
 /TestEv/TestEv.Api/obj/Debug/net10.0
 /TestEv/TestEv.Api/obj
+/TestEv/TestEv.Application/bin/Debug/net10.0
+/TestEv/TestEv.Domain/bin/Debug/net10.0

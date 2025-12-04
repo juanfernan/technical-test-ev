@@ -11,7 +11,9 @@ services:
       - DynamoDb__ServiceUrl=http://dynamodb:8000
       - DynamoDb__Region=us-east-1
       - DynamoDb__ProjectsTableName=Projects
-      - Jwt__Secret=k8sP@ssw0rd#2024$JwtT0k3nS3cr3tK3y!
+      - AWS_ACCESS_KEY_ID=fakeAccessKeyId
+      - AWS_SECRET_ACCESS_KEY=fakeSecretAccessKey
+      - Jwt__Secret=x7Kp2mNqR9vBwYzA4cFgHjLsXtUeWo3i
       - Jwt__Issuer=TestEv
       - Jwt__Audience=TestEvClients
       - Jwt__ExpirationMinutes=60
@@ -27,21 +29,17 @@ services:
     image: amazon/dynamodb-local:latest
     ports:
       - "8000:8000"
-    command: "-jar DynamoDBLocal.jar -sharedDb -dbPath /data"
-    volumes:
-      - dynamodb-data:/data
+    command: "-jar DynamoDBLocal.jar -sharedDb -inMemory"
     healthcheck:
-      test: ["CMD-SHELL", "curl -f http://localhost:8000/shell/ || exit 1"]
+      test: ["CMD-SHELL", "exit 0"]
       interval: 5s
       timeout: 5s
-      retries: 5
+      retries: 3
+      start_period: 5s
     networks:
       - testev-network
 
 networks:
   testev-network:
     driver: bridge
-
-volumes:
-  dynamodb-data:
 

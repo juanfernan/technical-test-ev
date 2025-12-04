@@ -1,32 +1,29 @@
-# Consulte https://aka.ms/customizecontainer para aprender a personalizar su contenedor de depuración y cómo Visual Studio usa este Dockerfile para compilar sus imágenes para una depuración más rápida.
-
-# Dependiendo del sistema operativo de las máquinas host que vayan a compilar o ejecutar los contenedores, puede que sea necesario cambiar la imagen especificada en la instrucción FROM.
-# Para más información, consulte https://aka.ms/containercompat
-
-# Esta fase se usa cuando se ejecuta desde VS en modo rápido (valor predeterminado para la configuración de depuración)
-FROM mcr.microsoft.com/dotnet/aspnet:10.0-nanoserver-ltsc2022 AS base
+FROM mcr.microsoft.com/dotnet/aspnet:10.0 AS base
 WORKDIR /app
 EXPOSE 8080
-EXPOSE 8081
 
-
-# Esta fase se usa para compilar el proyecto de servicio
-FROM mcr.microsoft.com/dotnet/sdk:10.0-nanoserver-ltsc2022 AS build
+FROM mcr.microsoft.com/dotnet/sdk:10.0 AS build
 ARG BUILD_CONFIGURATION=Release
 WORKDIR /src
-COPY ["TestEv/TestEv.csproj", "TestEv/"]
-RUN dotnet restore "./TestEv/TestEv.csproj"
-COPY . .
-WORKDIR "/src/TestEv"
-RUN dotnet build "./TestEv.csproj" -c %BUILD_CONFIGURATION% -o /app/build
 
-# Esta fase se usa para publicar el proyecto de servicio que se copiará en la fase final.
+COPY ["TestEv.Api/TestEv.Api.csproj", "TestEv.Api/"]
+COPY ["TestEv.Application/TestEv.Application.csproj", "TestEv.Application/"]
+COPY ["TestEv.Domain/TestEv.Domain.csproj", "TestEv.Domain/"]
+COPY ["TestEv.Infrastructure/TestEv.Infrastructure.csproj", "TestEv.Infrastructure/"]
+
+RUN dotnet restore "TestEv.Api/TestEv.Api.csproj"
+
+COPY . .
+WORKDIR "/src/TestEv.Api"
+RUN dotnet build "TestEv.Api.csproj" -c $BUILD_CONFIGURATION -o /app/build
+
 FROM build AS publish
 ARG BUILD_CONFIGURATION=Release
-RUN dotnet publish "./TestEv.csproj" -c %BUILD_CONFIGURATION% -o /app/publish /p:UseAppHost=false
+RUN dotnet publish "TestEv.Api.csproj" -c $BUILD_CONFIGURATION -o /app/publish /p:UseAppHost=false
 
-# Esta fase se usa en producción o cuando se ejecuta desde VS en modo normal (valor predeterminado cuando no se usa la configuración de depuración)
 FROM base AS final
 WORKDIR /app
 COPY --from=publish /app/publish .
-ENTRYPOINT ["dotnet", "TestEv.dll"]
+ENV ASPNETCORE_URLS=http://+:8080
+ENV ASPNETCORE_ENVIRONMENT=Development
+ENTRYPOINT ["dotnet", "TestEv.Api.dll"]

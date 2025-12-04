@@ -1,0 +1,47 @@
+services:
+  api:
+    build:
+      context: .
+      dockerfile: TestEv.Api/Dockerfile
+    ports:
+      - "5000:8080"
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Development
+      - DynamoDb__UseLocalDb=true
+      - DynamoDb__ServiceUrl=http://dynamodb:8000
+      - DynamoDb__Region=us-east-1
+      - DynamoDb__ProjectsTableName=Projects
+      - Jwt__Secret=k8sP@ssw0rd#2024$JwtT0k3nS3cr3tK3y!
+      - Jwt__Issuer=TestEv
+      - Jwt__Audience=TestEvClients
+      - Jwt__ExpirationMinutes=60
+      - AdminUser__Username=admin
+      - AdminUser__Password=Admin123!
+    depends_on:
+      dynamodb:
+        condition: service_healthy
+    networks:
+      - testev-network
+
+  dynamodb:
+    image: amazon/dynamodb-local:latest
+    ports:
+      - "8000:8000"
+    command: "-jar DynamoDBLocal.jar -sharedDb -dbPath /data"
+    volumes:
+      - dynamodb-data:/data
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:8000/shell/ || exit 1"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    networks:
+      - testev-network
+
+networks:
+  testev-network:
+    driver: bridge
+
+volumes:
+  dynamodb-data:
+

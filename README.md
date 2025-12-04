@@ -34,6 +34,15 @@ dotnet run --project TestEv.Api
 
 The API will be available at http://localhost:5258
 
+### User and pass for the authentication
+
+```
+{
+  "username": "admin",
+  "password": "Admin123!"
+}
+```
+
 ### Docker
 
 ```
